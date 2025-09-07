@@ -5,7 +5,7 @@ from sentence_transformers import SentenceTransformer, util
 import torch
 import google.generativeai as genai
 
-from ..models.schemas import UserProfile
+from app.models.schemas import UserProfile
 
 # --- 0. Configure Gemini API ---
 from dotenv import load_dotenv

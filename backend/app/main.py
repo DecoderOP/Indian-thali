@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from .models.schemas import UserProfile, DietPlanResponse
-from .logic.planner import generate_plan_logic
+from app.models.schemas import UserProfile, DietPlanResponse
+from app.logic.planner import generate_plan_logic
 import os
 
 # Create the FastAPI app instance
@@ -15,9 +15,9 @@ app = FastAPI(
 # This allows your frontend (running on a different domain) to make requests to this backend.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allows all origins. For production, you might restrict this.
+    allow_origins=["http://localhost:3000"],  # Allow the Next.js frontend
     allow_credentials=True,
-    allow_methods=["*"],  # Allows all methods (GET, POST, etc.)
+    allow_methods=["GET", "POST", "PUT", "DELETE"],  # Allow specific methods
     allow_headers=["*"],  # Allows all headers.
 )
 
