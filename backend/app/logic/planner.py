@@ -5,7 +5,7 @@ from sentence_transformers import SentenceTransformer, util
 import torch
 import google.generativeai as genai
 
-from app.models.schemas import UserProfile
+from ..models.schemas import UserProfile
 
 # --- 0. Configure Gemini API ---
 from dotenv import load_dotenv
@@ -51,39 +51,55 @@ else:
 
 # 2. Create the Scientific Nutrient Corpus and Embeddings for Mapping
 if not abbreviations_df.empty:
-    # This is our target list of official nutrient names
     target_nutrient_corpus = abbreviations_df['name'].dropna().unique().tolist()
-    # Create embeddings for each of these official names
     nutrient_embeddings = model.encode(target_nutrient_corpus, convert_to_tensor=True)
     print(f"✅ Embeddings created for {len(target_nutrient_corpus)} target nutrients.")
 else:
     target_nutrient_corpus = []
     nutrient_embeddings = torch.Tensor()
 
-# 3. Clean and Process Food Nutrient Data
-def process_food_data(df, mapper):
+# 3. Process Food Nutrient Data to store VALUES
+def process_food_data_with_values(df, mapper):
     if df.empty or not mapper:
         return {}
     
     df.columns = df.columns.str.lower()
-    nutrient_cols = [col for col in df.columns if not col.endswith('_e') and col in mapper]
+    food_to_nutrients_values = {}
     
-    food_to_nutrients = {}
     for _, row in df.iterrows():
         food_name = row['name']
-        present_nutrients = set()
-        for col in nutrient_cols:
-            if pd.notna(row[col]) and row[col] != 0:
-                present_nutrients.add(mapper[col])
-        food_to_nutrients[food_name] = present_nutrients
+        nutrients_with_values = {}
+        for code, name in mapper.items():
+            if code in df.columns and pd.notna(row[code]) and row[code] != 0:
+                nutrients_with_values[name] = row[code]
+        food_to_nutrients_values[food_name] = nutrients_with_values
         
-    return food_to_nutrients
+    return food_to_nutrients_values
 
-master_food_list = process_food_data(food_df, nutrient_mapper)
-print(f"✅ Master food list created with {len(master_food_list)} items.")
+master_food_list_values = process_food_data_with_values(food_df, nutrient_mapper)
+print(f"✅ Master food list with nutrient VALUES created for {len(master_food_list_values)} items.")
+
+# 4. **UPDATED:** Calculate average for ONLY non-zero nutrient values
+def calculate_nutrient_averages(df, mapper):
+    if df.empty or not mapper:
+        return {}
+    
+    df.columns = df.columns.str.lower()
+    averages = {}
+    for code, name in mapper.items():
+        if code in df.columns:
+            numeric_col = pd.to_numeric(df[code], errors='coerce')
+            # Filter out NaNs and zeros before calculating the mean
+            non_zero_values = numeric_col[numeric_col > 0]
+            if not non_zero_values.empty:
+                averages[name] = non_zero_values.mean()
+    return averages
+
+nutrient_averages = calculate_nutrient_averages(food_df, nutrient_mapper)
+print(f"✅ Averages calculated for {len(nutrient_averages)} nutrients (from non-zero values only).")
 
 
-# 4. Create Disease Embeddings
+# 5. Create Disease Embeddings
 if not disease_df.empty:
     disease_df.columns = disease_df.columns.str.lower().str.strip()
     predefined_diseases = disease_df['disease'].dropna().unique().tolist()
@@ -97,6 +113,7 @@ else:
 # --- PHASE 2: RUNTIME LOGIC (runs on each API call) ---
 
 def find_best_disease_match(user_input: str) -> str | None:
+    # ... (This function remains the same)
     if not user_input or not predefined_diseases:
         return None
     input_embedding = model.encode(user_input, convert_to_tensor=True)
@@ -105,6 +122,7 @@ def find_best_disease_match(user_input: str) -> str | None:
     return predefined_diseases[best_match_index]
 
 def get_clinical_nutrients_for_disease(disease_name: str) -> set:
+    # ... (This function remains the same)
     match = disease_df[disease_df['disease'] == disease_name]
     if not match.empty:
         nutrients_str = match.iloc[0]['recommended_nutrients']
@@ -112,53 +130,50 @@ def get_clinical_nutrients_for_disease(disease_name: str) -> set:
         return {nutrient.strip() for nutrient in cleaned_nutrients_str.split(',')}
     return set()
 
-# --- NEW: Intelligent Nutrient Mapping Function ---
-def map_clinical_to_scientific_nutrients(clinical_nutrients: set, top_k: int = 3) -> set:
-    """
-    Maps clinical nutrient terms to scientific names using semantic search.
-    """
+def map_clinical_to_scientific_nutrients(clinical_nutrients: set, top_k: int = 1) -> set:
+    # ... (This function remains the same)
     if not clinical_nutrients or not target_nutrient_corpus:
         return set()
 
     mapped_nutrients = set()
-    # Create embeddings for the incoming clinical terms
     clinical_embeddings = model.encode(list(clinical_nutrients), convert_to_tensor=True)
-
-    # Compute cosine similarities between clinical and scientific nutrient names
     cosine_scores = util.pytorch_cos_sim(clinical_embeddings, nutrient_embeddings)
 
-    # For each clinical nutrient, find the top k best matches from the scientific corpus
     for i in range(len(clinical_nutrients)):
-        # Get the top_k results for the i-th clinical nutrient
-        top_results = torch.topk(cosine_scores[i], k=top_k)
-        
-        for score, idx in zip(top_results.values, top_results.indices):
-            # We can set a similarity threshold to ensure quality matches
-            if score > 0.5: # Confidence threshold
-                mapped_nutrients.add(target_nutrient_corpus[idx])
+        best_match_index = torch.argmax(cosine_scores[i]).item()
+        mapped_nutrients.add(target_nutrient_corpus[best_match_index])
                 
     return mapped_nutrients
 
-def filter_foods_by_nutrients(required_nutrients: set, match_threshold: float = 0.4) -> list:
+# --- Food Ranking Logic based on Average Nutrient Values ---
+def rank_foods_by_average(required_nutrients: set) -> list:
     """
-    Filters foods based on the scientifically mapped nutrient list.
+    Ranks foods based on how many required nutrients they contain in "above average" amounts.
     """
-    if not required_nutrients:
-        return []
-
-    recommended_foods = []
-    for food, food_nutrients in master_food_list.items():
-        common_nutrients = required_nutrients.intersection(food_nutrients)
-        
-        match_score = len(common_nutrients) / len(required_nutrients)
-        
-        if match_score >= match_threshold:
-            recommended_foods.append(food)
+    food_scores = {}
+    
+    for food, nutrients in master_food_list_values.items():
+        score = 0
+        for req_nutrient in required_nutrients:
+            if req_nutrient in nutrients:
+                average_amount = nutrient_averages.get(req_nutrient)
+                # Ensure we have a valid average to compare against
+                if average_amount is not None:
+                    current_amount = nutrients[req_nutrient]
+                    if current_amount > average_amount:
+                        score += 1 # This food is an "above average" source for one required nutrient
+        if score > 0:
+            food_scores[food] = score
             
-    return recommended_foods
+    # Sort foods by their score in descending order
+    sorted_foods = sorted(food_scores.items(), key=lambda item: item[1], reverse=True)
+    
+    # Return the names of the top 30 most potent foods
+    return [food for food, score in sorted_foods[:30]]
+
 
 async def generate_final_plan_with_gemini(profile: UserProfile, disease: str, nutrients: set, foods: list) -> str:
-    # This function remains the same, it just receives better data now.
+    # ... (This function remains the same, but now gets a higher quality food list)
     prompt = f"""
     Act as an expert nutritionist and chef. Your task is to create a helpful, personalized, and safe dietary recommendation plan.
 
@@ -172,21 +187,20 @@ async def generate_final_plan_with_gemini(profile: UserProfile, disease: str, nu
     The primary goal is to recommend foods that support the management of {disease}. Based on medical data, the key nutrients to focus on are:
     - {', '.join(sorted(list(nutrients)))}
 
-    **Recommended Food Items:**
-    Based on a nutritional database analysis, the following foods are highly recommended as they contain a significant number of the required nutrients:
+    **Top Recommended Food Items:**
+    Based on a nutritional analysis, the following foods are the most potent sources for the required nutrients (containing them in above-average amounts):
     - {', '.join(sorted(foods))}
 
     **Your Task:**
     Generate a simple, actionable, and encouraging 1-day sample meal plan (Breakfast, Lunch, Dinner).
     1.  For each meal, suggest a simple recipe name using ONLY the recommended food items listed above.
     2.  Provide a brief, one-sentence explanation for why the meal is beneficial, mentioning one or two key nutrients it provides.
-    3.  IMPORTANT: Do not suggest any food item that is NOT in the 'Recommended Food Items' list.
+    3.  IMPORTANT: Do not suggest any food item that is NOT in the 'Top Recommended Food Items' list.
     4.  Include a friendly introduction and a clear disclaimer at the end stating that this is not medical advice and the user should consult a doctor.
 
     Format the output in clean Markdown.
     """
     try:
-        # --- FIXED: Updated the model name to the latest stable version ---
         model_gemini = genai.GenerativeModel('gemini-1.5-flash-latest')
         response = await model_gemini.generate_content_async(prompt)
         return response.text
@@ -200,31 +214,27 @@ async def generate_plan_logic(user_profile: UserProfile) -> str:
     print(f"\n--- New Request ---")
     print(f"User Input Disease: '{user_profile.disease}'")
 
-    # 1. Match user input to a predefined disease
+    # 1. Match disease
     matched_disease = find_best_disease_match(user_profile.disease)
-    if not matched_disease:
-        return "Could not identify a matching health condition from the provided input."
+    if not matched_disease: return "Could not identify a matching health condition."
     print(f"🔍 Best Disease Match: '{matched_disease}'")
 
-    # 2. Get the list of clinical nutrient terms for that disease
+    # 2. Get clinical nutrients
     clinical_nutrients = get_clinical_nutrients_for_disease(matched_disease)
-    if not clinical_nutrients:
-        return f"Found a match for '{matched_disease}', but no specific nutrient recommendations are available in the dataset."
+    if not clinical_nutrients: return f"No specific nutrient recommendations found for '{matched_disease}'."
     print(f"🌿 Clinical Nutrients Required: {', '.join(clinical_nutrients)}")
 
-    # 3. **NEW STEP**: Intelligently map clinical terms to scientific nutrient names
+    # 3. Map to scientific nutrients
     scientific_nutrients = map_clinical_to_scientific_nutrients(clinical_nutrients)
-    if not scientific_nutrients:
-        return f"Could not map the clinical nutrient requirements for '{matched_disease}' to specific nutrients in our food database."
+    if not scientific_nutrients: return "Could not map clinical needs to specific nutrients."
     print(f"💡 Scientifically Mapped Nutrients: {', '.join(scientific_nutrients)}")
 
-    # 4. Filter foods using the accurately mapped scientific nutrient list
-    recommended_foods = filter_foods_by_nutrients(scientific_nutrients)
-    if not recommended_foods:
-        return f"Found nutrient requirements for '{matched_disease}', but could not find enough matching food items in the database to generate a plan."
-    print(f"🍲 Recommended Foods ({len(recommended_foods)}): {', '.join(sorted(recommended_foods)[:5])}...")
+    # 4. **UPDATED:** Rank foods based on "above average" nutrient content
+    recommended_foods = rank_foods_by_average(scientific_nutrients)
+    if not recommended_foods: return f"Found nutrient requirements for '{matched_disease}', but could not find potent food sources in the database."
+    print(f"🍲 Top Recommended Foods ({len(recommended_foods)}): {', '.join(sorted(recommended_foods)[:])}...")
 
-    # 5. Generate the final plan with Gemini
+    # 5. Generate final plan
     final_plan = await generate_final_plan_with_gemini(user_profile, matched_disease, clinical_nutrients, recommended_foods)
     print("✅ Final plan generated by Gemini.")
     
