@@ -78,7 +78,7 @@ export default function ChatWindow() {
         disease: disease,
         symptoms: symptoms,
         age: 35, // Default age
-        gender: "Not specified", // Default gender
+        gender: "male", // Default gender
       };
 
       const response = (await generatePlan(userProfile)) as DietPlanResponse;

@@ -1,0 +1,331 @@
+﻿Nutrient,Age_Group,Gender,RDA,Unit
+Vitamin A,14-18,Male,900,µg
+Vitamin A,19-30,Male,900,µg
+Vitamin A,31-50,Male,900,µg
+Vitamin A,51-70,Male,900,µg
+Vitamin A,> 70,Male,900,µg
+Vitamin A,14-18,Female,700,µg
+Vitamin A,19-30,Female,700,µg
+Vitamin A,31-50,Female,700,µg
+Vitamin A,51-70,Female,700,µg
+Vitamin A,> 70,Female,700,µg
+Vitamin C,14-18,Male,75,mg
+Vitamin C,19-30,Male,90,mg
+Vitamin C,31-50,Male,90,mg
+Vitamin C,51-70,Male,90,mg
+Vitamin C,> 70,Male,90,mg
+Vitamin C,14-18,Female,65,mg
+Vitamin C,19-30,Female,75,mg
+Vitamin C,31-50,Female,75,mg
+Vitamin C,51-70,Female,75,mg
+Vitamin C,> 70,Female,75,mg
+Vitamin D,14-18,Male,15,µg
+Vitamin D,19-30,Male,15,µg
+Vitamin D,31-50,Male,15,µg
+Vitamin D,51-70,Male,15,µg
+Vitamin D,> 70,Male,20,µg
+Vitamin D,14-18,Female,15,µg
+Vitamin D,19-30,Female,15,µg
+Vitamin D,31-50,Female,15,µg
+Vitamin D,51-70,Female,15,µg
+Vitamin D,> 70,Female,20,µg
+Vitamin E,14-18,Male,15,mg
+Vitamin E,19-30,Male,15,mg
+Vitamin E,31-50,Male,15,mg
+Vitamin E,51-70,Male,15,mg
+Vitamin E,> 70,Male,15,mg
+Vitamin E,14-18,Female,15,mg
+Vitamin E,19-30,Female,15,mg
+Vitamin E,31-50,Female,15,mg
+Vitamin E,51-70,Female,15,mg
+Vitamin E,> 70,Female,15,mg
+Vitamin K,14-18,Male,75,µg
+Vitamin K,19-30,Male,120,µg
+Vitamin K,31-50,Male,120,µg
+Vitamin K,51-70,Male,120,µg
+Vitamin K,> 70,Male,120,µg
+Vitamin K,14-18,Female,75,µg
+Vitamin K,19-30,Female,90,µg
+Vitamin K,31-50,Female,90,µg
+Vitamin K,51-70,Female,90,µg
+Vitamin K,> 70,Female,90,µg
+Thiamine (B1),14-18,Male,1.2,mg
+Thiamine (B1),19-30,Male,1.2,mg
+Thiamine (B1),31-50,Male,1.2,mg
+Thiamine (B1),51-70,Male,1.2,mg
+Thiamine (B1),> 70,Male,1.2,mg
+Thiamine (B1),14-18,Female,1,mg
+Thiamine (B1),19-30,Female,1.1,mg
+Thiamine (B1),31-50,Female,1.1,mg
+Thiamine (B1),51-70,Female,1.1,mg
+Thiamine (B1),> 70,Female,1.1,mg
+Riboflavin (B2),14-18,Male,1.3,mg
+Riboflavin (B2),19-30,Male,1.3,mg
+Riboflavin (B2),31-50,Male,1.3,mg
+Riboflavin (B2),51-70,Male,1.3,mg
+Riboflavin (B2),> 70,Male,1.3,mg
+Riboflavin (B2),14-18,Female,1,mg
+Riboflavin (B2),19-30,Female,1.1,mg
+Riboflavin (B2),31-50,Female,1.1,mg
+Riboflavin (B2),51-70,Female,1.1,mg
+Riboflavin (B2),> 70,Female,1.1,mg
+Niacin (B3),14-18,Male,16,mg
+Niacin (B3),19-30,Male,16,mg
+Niacin (B3),31-50,Male,16,mg
+Niacin (B3),51-70,Male,16,mg
+Niacin (B3),> 70,Male,16,mg
+Niacin (B3),14-18,Female,14,mg
+Niacin (B3),19-30,Female,14,mg
+Niacin (B3),31-50,Female,14,mg
+Niacin (B3),51-70,Female,14,mg
+Niacin (B3),> 70,Female,14,mg
+Total B6,14-18,Male,1.3,mg
+Total B6,19-30,Male,1.3,mg
+Total B6,31-50,Male,1.3,mg
+Total B6,51-70,Male,1.7,mg
+Total B6,> 70,Male,1.7,mg
+Total B6,14-18,Female,1.2,mg
+Total B6,19-30,Female,1.3,mg
+Total B6,31-50,Female,1.3,mg
+Total B6,51-70,Female,1.5,mg
+Total B6,> 70,Female,1.5,mg
+Folate (total),14-18,Male,400,µg
+Folate (total),19-30,Male,400,µg
+Folate (total),31-50,Male,400,µg
+Folate (total),51-70,Male,400,µg
+Folate (total),> 70,Male,400,µg
+Folate (total),14-18,Female,400,µg
+Folate (total),19-30,Female,400,µg
+Folate (total),31-50,Female,400,µg
+Folate (total),51-70,Female,400,µg
+Folate (total),> 70,Female,400,µg
+Vitamin B12,14-18,Male,2.4,µg
+Vitamin B12,19-30,Male,2.4,µg
+Vitamin B12,31-50,Male,2.4,µg
+Vitamin B12,51-70,Male,2.4,µg
+Vitamin B12,> 70,Male,2.4,µg
+Vitamin B12,14-18,Female,2.4,µg
+Vitamin B12,19-30,Female,2.4,µg
+Vitamin B12,31-50,Female,2.4,µg
+Vitamin B12,51-70,Female,2.4,µg
+Vitamin B12,> 70,Female,2.4,µg
+Pantothenic acid (B5),14-18,Male,5,mg
+Pantothenic acid (B5),19-30,Male,5,mg
+Pantothenic acid (B5),31-50,Male,5,mg
+Pantothenic acid (B5),51-70,Male,5,mg
+Pantothenic acid (B5),> 70,Male,5,mg
+Pantothenic acid (B5),14-18,Female,5,mg
+Pantothenic acid (B5),19-30,Female,5,mg
+Pantothenic acid (B5),31-50,Female,5,mg
+Pantothenic acid (B5),51-70,Female,5,mg
+Pantothenic acid (B5),> 70,Female,5,mg
+Biotin (B7),14-18,Male,25,µg
+Biotin (B7),19-30,Male,30,µg
+Biotin (B7),31-50,Male,30,µg
+Biotin (B7),51-70,Male,30,µg
+Biotin (B7),> 70,Male,30,µg
+Biotin (B7),14-18,Female,25,µg
+Biotin (B7),19-30,Female,30,µg
+Biotin (B7),31-50,Female,30,µg
+Biotin (B7),51-70,Female,30,µg
+Biotin (B7),> 70,Female,30,µg
+Choline,14-18,Male,550,mg
+Choline,19-30,Male,550,mg
+Choline,31-50,Male,550,mg
+Choline,51-70,Male,550,mg
+Choline,> 70,Male,550,mg
+Choline,14-18,Female,400,mg
+Choline,19-30,Female,425,mg
+Choline,31-50,Female,425,mg
+Choline,51-70,Female,425,mg
+Choline,> 70,Female,425,mg
+Moisture,14-18,Male,3.3,L
+Moisture,19-30,Male,3.7,L
+Moisture,31-50,Male,3.7,L
+Moisture,51-70,Male,3.7,L
+Moisture,> 70,Male,3.7,L
+Moisture,14-18,Female,2.3,L
+Moisture,19-30,Female,2.7,L
+Moisture,31-50,Female,2.7,L
+Moisture,51-70,Female,2.7,L
+Moisture,> 70,Female,2.7,L
+Carbohydrate,14-18,Male,130,g
+Carbohydrate,19-30,Male,130,g
+Carbohydrate,31-50,Male,130,g
+Carbohydrate,51-70,Male,130,g
+Carbohydrate,> 70,Male,130,g
+Carbohydrate,14-18,Female,130,g
+Carbohydrate,19-30,Female,130,g
+Carbohydrate,31-50,Female,130,g
+Carbohydrate,51-70,Female,130,g
+Carbohydrate,> 70,Female,130,g
+Dietary Fiber,14-18,Male,38,g
+Dietary Fiber,19-30,Male,38,g
+Dietary Fiber,31-50,Male,38,g
+Dietary Fiber,51-70,Male,30,g
+Dietary Fiber,> 70,Male,30,g
+Dietary Fiber,14-18,Female,26,g
+Dietary Fiber,19-30,Female,25,g
+Dietary Fiber,31-50,Female,25,g
+Dietary Fiber,51-70,Female,21,g
+Dietary Fiber,> 70,Female,21,g
+Cis ω-6 Fatty acids,14-18,Male,16,g
+Cis ω-6 Fatty acids,19-30,Male,17,g
+Cis ω-6 Fatty acids,31-50,Male,17,g
+Cis ω-6 Fatty acids,51-70,Male,14,g
+Cis ω-6 Fatty acids,> 70,Male,14,g
+Cis ω-6 Fatty acids,14-18,Female,11,g
+Cis ω-6 Fatty acids,19-30,Female,12,g
+Cis ω-6 Fatty acids,31-50,Female,12,g
+Cis ω-6 Fatty acids,51-70,Female,11,g
+Cis ω-6 Fatty acids,> 70,Female,11,g
+Cis ω-3 Fatty acids,14-18,Male,1.6,g
+Cis ω-3 Fatty acids,19-30,Male,1.6,g
+Cis ω-3 Fatty acids,31-50,Male,1.6,g
+Cis ω-3 Fatty acids,51-70,Male,1.6,g
+Cis ω-3 Fatty acids,> 70,Male,1.6,g
+Cis ω-3 Fatty acids,14-18,Female,1.1,g
+Cis ω-3 Fatty acids,19-30,Female,1.1,g
+Cis ω-3 Fatty acids,31-50,Female,1.1,g
+Cis ω-3 Fatty acids,51-70,Female,1.1,g
+Cis ω-3 Fatty acids,> 70,Female,1.1,g
+Protein,14-18,Male,52,g
+Protein,19-30,Male,56,g
+Protein,31-50,Male,56,g
+Protein,51-70,Male,56,g
+Protein,> 70,Male,56,g
+Protein,14-18,Female,46,g
+Protein,19-30,Female,46,g
+Protein,31-50,Female,46,g
+Protein,51-70,Female,46,g
+Protein,> 70,Female,46,g
+Calcium (Ca),14-18,Male,1100,mg
+Calcium (Ca),19-30,Male,800,mg
+Calcium (Ca),31-50,Male,800,mg
+Calcium (Ca),51-70,Male,800,mg
+Calcium (Ca),> 70,Male,1000,mg
+Calcium (Ca),14-18,Female,1100,mg
+Calcium (Ca),19-30,Female,800,mg
+Calcium (Ca),31-50,Female,800,mg
+Calcium (Ca),51-70,Female,1000,mg
+Calcium (Ca),> 70,Female,1000,mg
+Iron (Fe),14-18,Male,7.7,mg
+Iron (Fe),19-30,Male,6,mg
+Iron (Fe),31-50,Male,6,mg
+Iron (Fe),51-70,Male,6,mg
+Iron (Fe),> 70,Male,6,mg
+Iron (Fe),14-18,Female,7.9,mg
+Iron (Fe),19-30,Female,8.1,mg
+Iron (Fe),31-50,Female,8.1,mg
+Iron (Fe),51-70,Female,5,mg
+Iron (Fe),> 70,Female,5,mg
+Magnesium (Mg),14-18,Male,340,mg
+Magnesium (Mg),19-30,Male,330,mg
+Magnesium (Mg),31-50,Male,350,mg
+Magnesium (Mg),51-70,Male,350,mg
+Magnesium (Mg),> 70,Male,350,mg
+Magnesium (Mg),14-18,Female,300,mg
+Magnesium (Mg),19-30,Female,255,mg
+Magnesium (Mg),31-50,Female,265,mg
+Magnesium (Mg),51-70,Female,265,mg
+Magnesium (Mg),> 70,Female,265,mg
+Phosphorus (P),14-18,Male,1055,mg
+Phosphorus (P),19-30,Male,580,mg
+Phosphorus (P),31-50,Male,580,mg
+Phosphorus (P),51-70,Male,580,mg
+Phosphorus (P),> 70,Male,580,mg
+Phosphorus (P),14-18,Female,1055,mg
+Phosphorus (P),19-30,Female,580,mg
+Phosphorus (P),31-50,Female,580,mg
+Phosphorus (P),51-70,Female,580,mg
+Phosphorus (P),> 70,Female,580,mg
+Zinc (Zn),14-18,Male,8.5,mg
+Zinc (Zn),19-30,Male,9.4,mg
+Zinc (Zn),31-50,Male,9.4,mg
+Zinc (Zn),51-70,Male,9.4,mg
+Zinc (Zn),> 70,Male,9.4,mg
+Zinc (Zn),14-18,Female,7.3,mg
+Zinc (Zn),19-30,Female,6.8,mg
+Zinc (Zn),31-50,Female,6.8,mg
+Zinc (Zn),51-70,Female,6.8,mg
+Zinc (Zn),> 70,Female,6.8,mg
+Copper (Cu),14-18,Male,685,µg
+Copper (Cu),19-30,Male,700,µg
+Copper (Cu),31-50,Male,700,µg
+Copper (Cu),51-70,Male,700,µg
+Copper (Cu),> 70,Male,700,µg
+Copper (Cu),14-18,Female,685,µg
+Copper (Cu),19-30,Female,700,µg
+Copper (Cu),31-50,Female,700,µg
+Copper (Cu),51-70,Female,700,µg
+Copper (Cu),> 70,Female,700,µg
+Selenium (Se),14-18,Male,45,µg
+Selenium (Se),19-30,Male,45,µg
+Selenium (Se),31-50,Male,45,µg
+Selenium (Se),51-70,Male,45,µg
+Selenium (Se),> 70,Male,45,µg
+Selenium (Se),14-18,Female,45,µg
+Selenium (Se),19-30,Female,45,µg
+Selenium (Se),31-50,Female,45,µg
+Selenium (Se),51-70,Female,45,µg
+Selenium (Se),> 70,Female,45,µg
+Iodine (I),14-18,Male,95,µg
+Iodine (I),19-30,Male,95,µg
+Iodine (I),31-50,Male,95,µg
+Iodine (I),51-70,Male,95,µg
+Iodine (I),> 70,Male,95,µg
+Iodine (I),14-18,Female,95,µg
+Iodine (I),19-30,Female,95,µg
+Iodine (I),31-50,Female,95,µg
+Iodine (I),51-70,Female,95,µg
+Iodine (I),> 70,Female,95,µg
+Manganese (Mn),14-18,Male,2.2,mg
+Manganese (Mn),19-30,Male,2.3,mg
+Manganese (Mn),31-50,Male,2.3,mg
+Manganese (Mn),51-70,Male,2.3,mg
+Manganese (Mn),> 70,Male,2.3,mg
+Manganese (Mn),14-18,Female,1.6,mg
+Manganese (Mn),19-30,Female,1.8,mg
+Manganese (Mn),31-50,Female,1.8,mg
+Manganese (Mn),51-70,Female,1.8,mg
+Manganese (Mn),> 70,Female,1.8,mg
+Chromium (Cr),14-18,Male,35,µg
+Chromium (Cr),19-30,Male,35,µg
+Chromium (Cr),31-50,Male,35,µg
+Chromium (Cr),51-70,Male,30,µg
+Chromium (Cr),> 70,Male,30,µg
+Chromium (Cr),14-18,Female,24,µg
+Chromium (Cr),19-30,Female,25,µg
+Chromium (Cr),31-50,Female,25,µg
+Chromium (Cr),51-70,Female,20,µg
+Chromium (Cr),> 70,Female,20,µg
+Molybdenum (Mo),14-18,Male,33,µg
+Molybdenum (Mo),19-30,Male,34,µg
+Molybdenum (Mo),31-50,Male,34,µg
+Molybdenum (Mo),51-70,Male,34,µg
+Molybdenum (Mo),> 70,Male,34,µg
+Molybdenum (Mo),14-18,Female,33,µg
+Molybdenum (Mo),19-30,Female,34,µg
+Molybdenum (Mo),31-50,Female,34,µg
+Molybdenum (Mo),51-70,Female,34,µg
+Molybdenum (Mo),> 70,Female,34,µg
+Chloride (Cl),14-18,Male,2.3,g
+Chloride (Cl),19-30,Male,2.3,g
+Chloride (Cl),31-50,Male,2.3,g
+Chloride (Cl),51-70,Male,2,g
+Chloride (Cl),> 70,Male,1.8,g
+Chloride (Cl),14-18,Female,2.3,g
+Chloride (Cl),19-30,Female,2.3,g
+Chloride (Cl),31-50,Female,2.3,g
+Chloride (Cl),51-70,Female,2,g
+Chloride (Cl),> 70,Female,1.8,g
+Potassium (K),14-18,Male,4.7,g
+Potassium (K),19-30,Male,4.7,g
+Potassium (K),31-50,Male,4.7,g
+Potassium (K),51-70,Male,4.7,g
+Potassium (K),> 70,Male,4.7,g
+Potassium (K),14-18,Female,4.7,g
+Potassium (K),19-30,Female,4.7,g
+Potassium (K),31-50,Female,4.7,g
+Potassium (K),51-70,Female,4.7,g
+Potassium (K),> 70,Female,4.7,g
