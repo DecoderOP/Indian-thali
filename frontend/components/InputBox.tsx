@@ -3,67 +3,101 @@
 import { useState } from "react";
 
 interface InputBoxProps {
-  onSend: (message: string) => void;
+  onSend: (payload: {
+    disease: string;
+    symptoms: string;
+    age: number;
+    gender: string;
+  }) => void;
   disabled?: boolean;
 }
 
 export default function InputBox({ onSend, disabled }: InputBoxProps) {
-  const [input, setInput] = useState("");
+  const [query, setQuery] = useState("");
+  const [age, setAge] = useState<number | "">("");
+  const [gender, setGender] = useState("male");
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!input.trim()) return;
-    onSend(input.trim());
-    setInput("");
+    if (!query.trim()) return;
+
+    // For the pill-style input we treat the single-line query as the main concern
+    onSend({
+      disease: query.trim(),
+      symptoms: "",
+      age: Number(age) || 30,
+      gender,
+    });
+
+    setQuery("");
+    setAge("");
   }
 
   return (
-    <div className="relative">
-      <form
-        onSubmit={handleSubmit}
-        className="relative flex items-stretch overflow-hidden border-2 border-[var(--primary-light)] rounded-md shadow-lg"
-      >
-        <textarea
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="Describe your wellness concerns..."
-          rows={1}
-          className="flex-1 px-4 py-3 resize-none border-none overflow-hidden rounded-l-md text-[var(--input-text)] bg-transparent placeholder:text-[var(--input-placeholder)] focus:outline-none font-medium m-0 block w-full"
-          disabled={disabled}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
-              e.preventDefault();
-              if (input.trim()) handleSubmit(e);
-            }
-          }}
-        />
-        <button
-          type="submit"
-          disabled={disabled || !input.trim()}
-          className={`px-4 py-3 rounded-r-md flex-shrink-0 border-l border-[var(--primary-light)] h-auto flex items-center ${
-            input.trim()
-              ? "text-white bg-[var(--primary)] hover:bg-[var(--primary-dark)] font-medium"
-              : "text-[var(--input-placeholder)] bg-[var(--neutral)] cursor-not-allowed"
-          } transition-all`}
-        >
-          <div className="flex items-center gap-1">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="currentColor"
-              className="w-5 h-5"
+    <div className="w-full">
+      {/* Age & Gender row above the pill input */}
+      <form onSubmit={handleSubmit} className="w-full">
+        <div className="flex items-center gap-3 mb-3">
+          <input
+            type="number"
+            min={5}
+            max={120}
+            value={age}
+            onChange={(e) => setAge(e.target.value ? Number(e.target.value) : "")}
+            placeholder="Age"
+            className="w-24 px-3 py-2 rounded-md border border-[var(--primary-light)] text-[var(--input-text)] focus:ring-2 focus:ring-[var(--primary)] focus:outline-none bg-white"
+            disabled={disabled}
+            aria-label="Age"
+          />
+
+          <select
+            value={gender}
+            onChange={(e) => setGender(e.target.value)}
+            className="px-3 py-2 rounded-md border border-[var(--primary-light)] text-[var(--input-text)] focus:ring-2 focus:ring-[var(--primary)] focus:outline-none bg-white"
+            disabled={disabled}
+            aria-label="Gender"
+          >
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+
+        {/* Pill-style input */}
+        <div className="flex items-center">
+          <label htmlFor="chat-query" className="sr-only">Ask anything</label>
+          <div className="flex items-center w-full bg-white shadow-sm rounded-sm border border-[var(--primary-light)] px-4 py-2">
+            <input
+              id="chat-query"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Ask anything"
+              className="flex-1 bg-transparent placeholder:text-[var(--input-placeholder)] text-[var(--input-text)] outline-none px-2 py-1"
+              disabled={disabled}
+              aria-label="Ask anything"
+            />
+
+            <button
+              type="submit"
+              aria-label="Send"
+              disabled={disabled || !query.trim()}
+              className={`ml-3 flex items-center justify-center w-10 h-10 rounded-full transition-colors ${
+                query.trim()
+                  ? 'bg-[var(--primary)] text-white hover:bg-[var(--primary-dark)]'
+                  : 'bg-[var(--neutral)] text-[var(--input-placeholder)] cursor-not-allowed'
+              }`}
             >
-              <path d="M3.478 2.405a.75.75 0 00-.926.94l2.432 7.905H13.5a.75.75 0 010 1.5H4.984l-2.432 7.905a.75.75 0 00.926.94 60.519 60.519 0 0018.445-8.986.75.75 0 000-1.218A60.517 60.517 0 003.478 2.405z" />
-            </svg>
-            <span>Send</span>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="w-5 h-5" fill="currentColor">
+                <path d="M2 21l21-9L2 3v7l15 2-15 2v7z" />
+              </svg>
+            </button>
           </div>
-        </button>
+        </div>
       </form>
 
-      <div className="text-center text-xs text-[var(--primary-dark)] font-medium mt-3 px-3 py-1 bg-[var(--neutral)] rounded-md inline-block mx-auto">
-        Your Indian Thali provides personalized nutritional guidance for Indian
-        Thali recommendations
-      </div>
+      <p className="text-center text-xs text-[var(--primary-dark)] font-medium mt-3 px-3 py-1 bg-[var(--neutral)] rounded-md inline-block mx-auto">
+        Your Indian Thali provides hyper-personalized, evidence-based nutrition guidance.
+      </p>
     </div>
   );
 }

@@ -2,8 +2,11 @@
 
 import { useState, useEffect, useCallback } from "react";
 import MessageBubble from "./MessageBubble";
-import InputBox from "./InputBox";
-import Sidebar from "./Sidebar";
+import dynamic from "next/dynamic";
+
+// Load heavy or client-only UI as dynamic with no SSR to avoid hydration mismatches
+const Sidebar = dynamic(() => import("./Sidebar"), { ssr: false });
+const InputBox = dynamic(() => import("./InputBox"), { ssr: false });
 import { generatePlan, UserProfileData } from "../lib/api";
 import { useConversations } from "../lib/useConversations";
 import { DietPlanResponse } from "../lib/types";
@@ -33,6 +36,8 @@ export default function ChatWindow() {
   function startNewConsultation() {
     setMessages([]);
     setActiveConversationId(null);
+    // ensure input reappears when user starts a new consultation
+    setLoading(false);
   }
 
   // Function to load a conversation
@@ -55,35 +60,44 @@ export default function ChatWindow() {
     }
   }
 
-  async function handleSend(userInput: string) {
-    setMessages((prev) => [...prev, { sender: "user", text: userInput }]);
+  type SendPayload =
+    | string
+    | {
+        disease: string;
+        symptoms: string;
+        age: number;
+        gender: string;
+      };
+
+  async function handleSend(input: SendPayload) {
+    // normalize input into a user-visible text and a profile payload
+    let userText = "";
+    let profile: { disease: string; symptoms: string[]; age: number; gender: string };
+
+    if (typeof input === "string") {
+      userText = input;
+      const lines = input.split("\n").filter((line) => line.trim());
+      const disease = lines[0] || input;
+      const symptomsText = lines.length > 1 ? lines.slice(1).join(" ") : input;
+      const symptoms = symptomsText.split(",").map((s) => s.trim());
+      profile = { disease, symptoms, age: 35, gender: "male" };
+    } else {
+      // object from InputBox
+      userText = `${input.disease}${input.symptoms ? "\n" + input.symptoms : ""}`;
+      profile = {
+        disease: input.disease,
+        symptoms: input.symptoms ? input.symptoms.split(",").map((s) => s.trim()) : [],
+        age: input.age || 30,
+        gender: input.gender || "male",
+      };
+    }
+
+    setMessages((prev) => [...prev, { sender: "user", text: userText }]);
     setLoading(true);
 
     try {
-      // Create a user profile from the input
-      // For simplicity, we're parsing the first line as the disease
-      // and any comma-separated parts as symptoms
-      const lines = userInput.split("\n").filter((line) => line.trim());
-      const disease = lines[0] || userInput;
+      const response = (await generatePlan(profile as any)) as DietPlanResponse;
 
-      // Extract symptoms from the rest of the text or use the main text
-      // In a real app, you'd have proper form inputs for these values
-      const symptomsText =
-        lines.length > 1 ? lines.slice(1).join(" ") : userInput;
-      const symptoms = symptomsText.split(",").map((s) => s.trim());
-
-      // Default values for age and gender - in a real app,
-      // you would collect these from the user
-      const userProfile = {
-        disease: disease,
-        symptoms: symptoms,
-        age: 35, // Default age
-        gender: "male", // Default gender
-      };
-
-      const response = (await generatePlan(userProfile)) as DietPlanResponse;
-
-      // Display the plan from the backend
       setMessages((prev) => [
         ...prev,
         {
@@ -152,7 +166,8 @@ export default function ChatWindow() {
         className="flex flex-col flex-1 md:transition-all md:duration-300"
         style={{ paddingLeft: !isMobile ? `${sidebarWidth}px` : "0px" }}
       >
-        <div className="flex-1 overflow-y-auto">
+  {/* add extra bottom padding so fixed input doesn't cover content */}
+  <div className="flex-1 overflow-y-auto" style={{ paddingBottom: 160 }}>
           {messages.length === 0 && (
             <div className="flex items-center justify-center h-full">
               <div className="text-center max-w-3xl mx-auto px-6">
@@ -247,10 +262,16 @@ export default function ChatWindow() {
           )}
         </div>
 
-        {/* Input fixed at bottom */}
+        {/* Input fixed at bottom - hide while recipe is generating */}
         <div className="fixed bottom-0 left-0 right-0 md:pl-64">
           <div className="mx-auto max-w-3xl px-4 pb-6">
-            <InputBox onSend={handleSend} disabled={loading} />
+            {!loading ? (
+              <InputBox onSend={handleSend} disabled={false} />
+            ) : (
+              <div className="p-4 rounded-md border border-[var(--primary-light)] bg-[var(--neutral)] text-[var(--muted-text)] text-center">
+                Generating personalized plan... please wait.
+              </div>
+            )}
           </div>
         </div>
       </div>
