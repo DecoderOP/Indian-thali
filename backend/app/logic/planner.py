@@ -102,13 +102,18 @@ def get_clinical_nutrients_from_graph(disease_name: str, driver: Driver) -> set:
             MATCH (d)-[:REQUIRES]->(n:Nutrient)
             RETURN n.name AS nutrient_name
         """, disease=disease_name)
-        return {record["nutrient_name"] for record in result}
+        # Return the count of nutrients as well, for the similarity query
+        nutrients = {record["nutrient_name"] for record in result}
+        return nutrients, len(nutrients)
+
 
 def map_clinical_to_scientific_nutrients(clinical_nutrients: set, ai_models: dict) -> set:
     """
-    Ensures the nutrient names from the graph (which might be clinical)
-    are mapped to the standardized scientific names for the RDA keys.
-    *This function is kept in case of vocabulary mismatches*
+    **CRITICAL FUNCTION**
+    Cleans the nutrient list from the graph.
+    It maps ambiguous names ("Vitamin B") or junk ("Food Code")
+    to the correct, scientific names ("Vitamin B12 (Cobalamin)")
+    that exist in our RDA table.
     """
     if (not clinical_nutrients 
         or not ai_models["target_nutrient_corpus"] 
@@ -124,8 +129,13 @@ def map_clinical_to_scientific_nutrients(clinical_nutrients: set, ai_models: dic
     cosine_scores = util.pytorch_cos_sim(clinical_embeddings, nutrient_embeddings)
 
     for i in range(len(clinical_nutrients)):
+        # Find the best match in our "clean" nutrient list
         best_match_index = torch.argmax(cosine_scores[i]).item()
-        mapped_nutrients.add(target_nutrient_corpus[best_match_index])
+        
+        # Only add it if the match is good (similarity > 0.5)
+        # This filters out junk like "Food Code"
+        if cosine_scores[i][best_match_index] > 0.5:
+            mapped_nutrients.add(target_nutrient_corpus[best_match_index])
                 
     return mapped_nutrients
 
@@ -157,19 +167,17 @@ def get_rda_key(age: int, gender: str) -> str:
 def rank_foods_by_rda_contribution(
     driver: Driver, 
     scientific_nutrients: set, 
+    nutrient_count: int,
     user_rda_key: str
 ) -> list:
     """
-    THE NEW CORE: Ranks foods using a Cypher query.
-    This replaces all the old Pandas logic.
+    THE NEW CORE: Ranks foods using a Cosine Similarity-based algorithm.
+    This rewards "balance" and is highly sensitive to the user's RDA.
     """
     with driver.session() as session:
-        # Note: The $user_rda_key is safely injected into the query string.
-        # This is generally safe as we control the input, but for production,
-        # parameterizing this would be even better if the driver supported it.
-        # We sanitize the key in get_rda_key() to prevent injection.
+        
         query = f"""
-        // 1. Start with the list of required nutrients
+        // 1. Start with the list of *clean* scientific nutrients
         UNWIND $nutrient_names AS nutrient_name
         MATCH (n:Nutrient {{name: nutrient_name}})
 
@@ -177,28 +185,71 @@ def rank_foods_by_rda_contribution(
         MATCH (f:Food)-[c:CONTAINS_NUTRIENT]->(n)
         
         // 3. Get the user's specific RDA property from the nutrient node
-        // We use apoc.when or CASE to handle missing RDA values gracefully
         WITH f, n, c.amount_mg AS food_provides, n.`{user_rda_key}` AS user_needs
 
-        // 4. Calculate %DV score (only for valid RDAs)
-        // and avoid division by zero
-        WITH f, 
+        // 4. Calculate %DV, handling missing/zero RDAs
+        WITH f, n,
              CASE 
                WHEN user_needs IS NOT NULL AND user_needs > 0 
                THEN (food_provides / user_needs) * 100 
                ELSE 0 
              END AS percent_dv
 
-        // 5. Sum the scores for each food
-        WITH f, sum(percent_dv) AS total_score
+        // 5. **NEW ALGORITHM: Cap the %DV at 100**
+        // This creates our "food vector" component. We care about
+        // sufficiency (100% DV), not massive excess (1000% DV).
+        WITH f, n,
+             CASE
+               WHEN percent_dv > 100 THEN 100
+               ELSE percent_dv
+             END AS capped_dv_component
 
-        // 6. Return the top 30 ranked foods
-        RETURN f.name AS food_name
-        ORDER BY total_score DESC
-        LIMIT 30
+        // 6. **NEW ALGORITHM: Calculate components for Cosine Similarity**
+        // Cosine Similarity = (A . B) / (||A|| * ||B||)
+        // A = Food Vector [v1, v2, ...], B = Ideal Vector [100, 100, ...]
+        
+        // We calculate:
+        // A.B (Dot Product) = sum(vi * 100) = 100 * sum(vi)
+        // ||A|| (Magnitude A) = sqrt(sum(vi^2))
+        // ||B|| (Magnitude B) = sqrt(sum(100^2)) = sqrt(N * 10000) = 100 * sqrt(N)
+        
+        // We pass N (nutrient_count) as a parameter.
+        WITH f,
+             sum(capped_dv_component) AS sum_vi,
+             sqrt(sum(capped_dv_component * capped_dv_component)) AS magnitude_A
+
+        // 7. **NEW ALGORITHM: Calculate the final similarity score**
+        // The 100s cancel out, simplifying the formula.
+        // We check for magnitude_A > 0 to avoid division by zero.
+        WITH f, sum_vi, magnitude_A,
+             CASE
+               WHEN magnitude_A > 0 AND $nutrient_count > 0 THEN sum_vi / (magnitude_A * sqrt($nutrient_count))
+               ELSE 0
+             END AS similarity_score
+             
+        // 8. Return the top 50 ranked foods
+        // **FIXED:** Added 'similarity_score' to the RETURN clause
+        RETURN f.name AS food_name, similarity_score
+        ORDER BY similarity_score DESC
+        LIMIT 50
         """
         
-        result = session.run(query, nutrient_names=list(scientific_nutrients))
+        result = session.run(
+            query, 
+            nutrient_names=list(scientific_nutrients),
+            nutrient_count=nutrient_count
+        )
+
+        # # Collect results into a list of tuples (food_name, score)
+        # top_foods = [(record["food_name"], record["similarity_score"]) for record in result]
+
+        # # Pretty print results
+        # print("\n🧩 Top 50 Ranked Foods by RDA Contribution:\n" + "-"*55)
+        # for idx, (food, score) in enumerate(top_foods, start=1):
+        #     print(f"{idx:2d}. {food:<30} | Similarity Score: {score:.4f}")
+        # print("-"*55)
+
+
         return [record["food_name"] for record in result]
 
 
@@ -237,7 +288,7 @@ async def generate_final_plan_with_gemini(profile: UserProfile, disease: str, nu
     - {', '.join(sorted(foods))}
 
     **Allowed Pantry Items (small amounts only):**
-    salt, water, neutral cooking oil, turmeric, cumin, coriander, chili powder, garam masala, mustard seeds, fresh cilantro, ginger, garlic
+    salt, water, neutral cooking oil, turmeric, cumin, coriander, chili powder, garam masala, mustard seeds, fresh cilantro, ginger, and garlic
 
     ---
 
@@ -266,12 +317,14 @@ async def generate_final_plan_with_gemini(profile: UserProfile, disease: str, nu
     """
 
     try:
-        model_gemini = genai.GenerativeModel('gemini-2.0-flash-exp')
+        # Using a model that is likely to be compatible, like 'gemini-1.0-pro'
+        # 'gemini-2.0-flash-exp' might not be a valid public model name.
+        model_gemini = genai.GenerativeModel('gemini-2.5-flash')
         response = await model_gemini.generate_content_async(prompt)
         return response.text
     except Exception as e:
         print(f"❌ Error during Gemini API call: {e}")
-        return "Error: Could not generate the diet plan at this time. Please try again later."
+        return "Error: Could not generate the diet plan at a this time. Please try again later."
 
 
 # --- Main Function Called by the API (Updated Flow) ---
@@ -290,26 +343,39 @@ async def generate_plan_logic(
     print(f"🔍 Best Disease Match: '{matched_disease}'")
 
     # 2. Get clinical nutrients (Graph Query)
-    clinical_nutrients = get_clinical_nutrients_from_graph(matched_disease, neo4j_driver)
+    # **UPDATED:** Now also gets the *count* of nutrients
+    clinical_nutrients, nutrient_count = get_clinical_nutrients_from_graph(matched_disease, neo4j_driver)
     if not clinical_nutrients: return f"No specific nutrient recommendations found for '{matched_disease}'."
-    print(f"🌿 Clinical Nutrients Required: {', '.join(clinical_nutrients)}")
+    print(f"🌿 Clinical Nutrients Required ({nutrient_count}): {', '.join(clinical_nutrients)}")
 
-    # 3. Map to scientific nutrients (Text -> Text Mapping)
-    # This step is a "failsafe" to ensure our nutrient names are standardized
+    # 3. **FIXED: Re-enabled the AI "Sanitizer" Step**
+    # This cleans the list from the graph, mapping "Vitamin B" -> "Vitamin B12"
+    # and filtering out junk like "Food Code".
     scientific_nutrients = map_clinical_to_scientific_nutrients(clinical_nutrients, ai_models)
     if not scientific_nutrients:
-        print("⚠️ Warning: Could not map nutrients, using raw clinical names.")
+        print("❌ Error: AI mapping failed to find any valid scientific nutrients.")
         scientific_nutrients = clinical_nutrients
     print(f"💡 Scientifically Mapped Nutrients: {', '.join(scientific_nutrients)}")
+    
+    # We must use the *new count* of *clean* nutrients for the query
+    scientific_nutrient_count = len(scientific_nutrients)
+    if scientific_nutrient_count == 0:
+        return f"Found nutrient requirements for '{matched_disease}', but could not find potent food sources in the database."
 
     # 4. Get the user's personal RDA property key (Python Logic)
     user_rda_key = get_rda_key(user_profile.age, user_profile.gender)
     print(f"🔬 User RDA Key: '{user_rda_key}'")
 
-    # 5. **NEW CORE:** Rank foods based on %DV contribution (Graph Query)
-    recommended_foods = rank_foods_by_rda_contribution(neo4j_driver, scientific_nutrients, user_rda_key)
+    # 5. **NEW CORE:** Rank foods based on Cosine Similarity (Graph Query)
+    # **UPDATED:** Passes the *new, clean* nutrient count
+    recommended_foods = rank_foods_by_rda_contribution(
+        neo4j_driver, 
+        scientific_nutrients, 
+        scientific_nutrient_count, 
+        user_rda_key
+    )
     if not recommended_foods: return f"Found nutrient requirements for '{matched_disease}', but could not find potent food sources in the database."
-    print(f"🍲 Top Recommended Foods ({len(recommended_foods)}): {', '.join(sorted(recommended_foods)[:5])}...")
+    print(f"🍲 Top Recommended Foods ({len(recommended_foods)}): {', '.join(sorted(recommended_foods)[:])}...")
 
     # 6. Generate final plan (LLM Call)
     final_plan = await generate_final_plan_with_gemini(user_profile, matched_disease, clinical_nutrients, recommended_foods)

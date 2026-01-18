@@ -9,7 +9,7 @@ import torch
 # --- CONFIGURATION ---
 NEO4J_URI = "neo4j://localhost:7687"
 NEO4J_USER = "neo4j"
-NEO4J_PASSWORD = "Thali@1938" # <-- Make sure this is your correct password
+NEO4J_PASSWORD = "Thali@1938" 
 load_dotenv()
 # --- END CONFIGURATION ---
 
@@ -86,7 +86,6 @@ def migrate_nutrients(driver, mapper, rda_df):
             
     print(f"✅ Migrated {len(all_nutrient_names)} nutrients and added RDA properties.")
 
-# --- NEW: AI Mapping Function for the Migration ---
 def map_clinical_to_scientific(clinical_nutrients, model, corpus, embeddings):
     """Uses AI to map clinical terms to scientific terms."""
     if not clinical_nutrients:
@@ -102,7 +101,6 @@ def map_clinical_to_scientific(clinical_nutrients, model, corpus, embeddings):
                 
     return mapped_nutrients
 
-# --- MODIFIED: This function is now "smart" ---
 def migrate_diseases(driver, disease_df, nutrient_mapper, ai_models):
     """
     Loads diseases and uses AI to link them to the correct
@@ -129,16 +127,13 @@ def migrate_diseases(driver, disease_df, nutrient_mapper, ai_models):
             cleaned_nutrients_str = re.sub(r'\s*\([^)]*\)', '', nutrients_str).lower()
             clinical_nutrients = {nutrient.strip() for nutrient in cleaned_nutrients_str.split(',') if nutrient.strip()}
             
-            # --- This is the new "smart" step ---
             scientific_nutrients = map_clinical_to_scientific(
                 clinical_nutrients,
                 ai_models["model"],
                 ai_models["target_nutrient_corpus"],
                 ai_models["nutrient_embeddings"]
             )
-            # --- End of smart step ---
             
-            # Create relationships using the *correct* scientific names
             for nutrient_name in scientific_nutrients:
                 session.run("""
                     MATCH (d:Disease {name: $disease})
@@ -148,10 +143,11 @@ def migrate_diseases(driver, disease_df, nutrient_mapper, ai_models):
                 
     print(f"✅ Migrated {len(disease_df)} disease entries (Smart Relationships).")
 
+# --- UPDATED FUNCTION WITH BLOCKLIST FILTERING ---
 def migrate_foods(driver, food_df, mapper):
     """
-    Loads foods and links them to the nutrients they contain,
-    storing the amount on the relationship.
+    Loads foods and links them to the nutrients they contain.
+    Explicitly FILTERS out Energy and Metadata fields.
     """
     if food_df.empty:
         return
@@ -159,8 +155,19 @@ def migrate_foods(driver, food_df, mapper):
     print("Migrating Foods...")
     food_df.columns = [col.strip().lower() for col in food_df.columns]
     
+    # 1. DEFINE BLOCKLIST (The "Mistake" Fix)
+    # 'enerc' is removed because Energy is a property, not a vitamin/mineral deficiency.
+    # Metadata fields are removed to prevent noise.
+    NON_NUTRIENT_FIELDS = {'code', 'scie', 'lang', 'grup', 'regn', 'tags', 'enerc'}
+
     with driver.session() as session:
-        nutrient_codes_in_db = [col for col in food_df.columns if col in mapper and not col.endswith('_e')]
+        # 2. Apply the Filter Logic here
+        nutrient_codes_in_db = [
+            col for col in food_df.columns 
+            if col in mapper 
+            and not col.endswith('_e')
+            and col not in NON_NUTRIENT_FIELDS  # <--- THIS IS THE FIX
+        ]
         
         for _, row in food_df.iterrows():
             food_name = row['name']
@@ -190,8 +197,8 @@ def migrate_foods(driver, food_df, mapper):
                         SET r.amount_mg = $amount
                     """, food=food_name, nutrient=nutrient_name, amount=amount_mg)
                     
-    print(f"✅ Migrated {len(food_df)} foods and their nutrient relationships.")
-
+    print(f"✅ Migrated {len(food_df)} foods (Filtered: Energy & Metadata removed).")
+# --- END UPDATED FUNCTION ---
 
 def main():
     print("--- Starting Graph Migration ETL (SMART MODE) ---")
@@ -205,7 +212,6 @@ def main():
         print("Please check your Neo4j credentials and that the database is running.")
         return
 
-    # --- NEW: Load AI Models for Smart Migration ---
     print("Loading AI model for semantic mapping...")
     model = SentenceTransformer('all-MiniLM-L6-v2')
     abbreviations_df = load_data('nutrients_abbreviations.csv')
@@ -219,7 +225,6 @@ def main():
         "nutrient_embeddings": nutrient_embeddings
     }
     print("✅ AI models loaded for migration.")
-    # --- End New AI Block ---
 
     # Load all data
     disease_df = load_data('disease_nutrients.csv')
@@ -233,7 +238,6 @@ def main():
     create_constraints(driver)
     migrate_nutrients(driver, nutrient_mapper, rda_df)
     
-    # --- MODIFIED: Pass AI models into disease migration ---
     migrate_diseases(driver, disease_df, nutrient_mapper, ai_models)
     
     migrate_foods(driver, food_df, nutrient_mapper)
@@ -241,8 +245,7 @@ def main():
     driver.close()
     
     print("--- Graph Migration ETL Complete ---")
-    print("Your new, 'smart' graph is ready in Neo4j Desktop.")
+    print("Your new, 'clean' graph (No Energy/Metadata nodes) is ready.")
 
 if __name__ == "__main__":
     main()
-

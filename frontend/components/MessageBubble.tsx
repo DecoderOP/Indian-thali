@@ -4,10 +4,20 @@ import remarkGfm from "remark-gfm";
 import rehypeHighlight from "rehype-highlight";
 import { Message } from "../lib/chatTypes";
 
-interface MessageBubbleProps extends Pick<Message, "sender" | "text"> {}
+interface MessageBubbleProps extends Pick<Message, "sender" | "text"> {
+  disease?: string;
+  symptoms?: string;
+  age?: number;
+  gender?: string;
+}
 
-export default function MessageBubble({ sender, text }: MessageBubbleProps) {
+export default function MessageBubble({ sender, text, disease, symptoms, age, gender }: MessageBubbleProps) {
   const isUser = sender === "user";
+
+  // Fallback: parse disease/symptoms from text if structured fields not present
+  const parsedLines = text ? text.split('\n').map((l) => l.trim()).filter(Boolean) : [];
+  const diseaseText = disease || parsedLines[0] || "";
+  const symptomsText = symptoms || (parsedLines.length > 1 ? parsedLines.slice(1).join(', ') : '');
 
   return (
     <div
@@ -36,8 +46,22 @@ export default function MessageBubble({ sender, text }: MessageBubbleProps) {
         {/* Message content */}
         <div className="prose prose-sm max-w-none flex-1">
           {isUser ? (
-            <div className="whitespace-pre-wrap text-[var(--foreground)] bg-[var(--accent-light)] p-4 rounded-lg border-l-4 border-[var(--primary)] shadow-sm">
-              {text}
+            <div className="relative">
+              <div className="whitespace-pre-wrap text-[var(--foreground)] bg-[var(--accent-light)] p-4 rounded-lg border-l-4 border-[var(--primary)] shadow-sm">
+                {diseaseText && <div className="font-semibold mb-2">{diseaseText}</div>}
+                {symptomsText && <div className="text-sm text-[var(--primary-dark)]">{symptomsText}</div>}
+              </div>
+
+              {/* age/gender pill at top-right of the bubble */}
+              {(age || gender) && (
+                <div className="absolute top-0 right-0 translate-x-1 -translate-y-1">
+                  <div className="flex items-center gap-2 bg-white border border-[var(--primary-light)] text-[var(--primary-dark)] rounded-full px-3 py-1 text-xs shadow-sm">
+                    {age ? <span>{age}y</span> : null}
+                    {age && gender ? <span className="opacity-50">•</span> : null}
+                    {gender ? <span className="capitalize">{gender}</span> : null}
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
             <div className="text-[var(--foreground)] bg-white p-4 rounded-lg border border-[var(--border-color)] shadow-sm">

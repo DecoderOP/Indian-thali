@@ -92,7 +92,17 @@ export default function ChatWindow() {
       };
     }
 
-    setMessages((prev) => [...prev, { sender: "user", text: userText }]);
+    setMessages((prev) => [
+      ...prev,
+      {
+        sender: "user",
+        text: userText,
+        disease: profile.disease,
+        symptoms: Array.isArray(profile.symptoms) ? profile.symptoms.join(", ") : (profile.symptoms as any) || "",
+        age: profile.age,
+        gender: profile.gender,
+      },
+    ]);
     setLoading(true);
 
     try {
@@ -255,7 +265,15 @@ export default function ChatWindow() {
           {messages.length > 0 && (
             <div className="pb-24 pt-5 mx-auto max-w-3xl px-4">
               {messages.map((m, i) => (
-                <MessageBubble key={i} sender={m.sender} text={m.text} />
+                <MessageBubble
+                  key={i}
+                  sender={m.sender}
+                  text={m.text}
+                  disease={m.disease}
+                  symptoms={m.symptoms}
+                  age={m.age}
+                  gender={m.gender}
+                />
               ))}
               {loading && <MessageBubble sender="ai" text="Thinking..." />}
             </div>
